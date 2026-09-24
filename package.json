@@ -10,6 +10,7 @@
     "dev": "vite",
     "prebuild": "node scripts/build-shell.mjs",
     "build": "vite build",
+    "postbuild": "node scripts/build-page.mjs --local",
     "preview": "vite preview",
     "test": "tsx --test tests/*.test.ts",
     "demo": "tsx scripts/demo.ts",

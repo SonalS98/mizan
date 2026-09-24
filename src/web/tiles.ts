@@ -56,6 +56,32 @@ export const tileLayer = (box: TileBox, basemap: Basemap = "satellite"): HTMLEle
   const layer = document.createElement("div");
   layer.className = "map-tiles";
   const source = SOURCES[basemap];
+  const notice = document.createElement("div");
+  notice.className = "map-load-status";
+  notice.setAttribute("role", "status");
+  notice.textContent = "Loading map imagery…";
+  layer.append(notice);
+  let loaded = 0;
+  let settled = 0;
+  let total = 0;
+  let timeout: ReturnType<typeof setTimeout>;
+  const showFailure = () => {
+    if (!layer.isConnected || loaded > 0) return;
+    notice.replaceChildren(document.createTextNode("Map imagery could not load. Check your connection or try another map. "));
+    for (const mode of [basemap, basemap === "satellite" ? "streets" : "satellite"] as Basemap[]) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = mode === basemap ? "Retry" : mode === "streets" ? "Try street map" : "Try satellite";
+      button.addEventListener("click", () => {
+        clearTimeout(timeout);
+        // Use the existing controls so attribution and selected basemap agree.
+        const control = document.getElementById(mode === "streets" ? "base-map" : "base-sat");
+        if (control) control.click();
+        else layer.replaceWith(tileLayer(box, mode));
+      });
+      notice.append(button);
+    }
+  };
 
   const [originLng, originLat] = box.origin;
   const mPerDegLat = 111320;
@@ -91,13 +117,24 @@ export const tileLayer = (box: TileBox, basemap: Basemap = "satellite"): HTMLEle
     for (let y = firstY; y <= lastY; y += 1) {
       if (y < 0 || y >= span) continue;
       const image = document.createElement("img");
+      total += 1;
       image.src = source.url(zoom, ((x % span) + span) % span, y);
       image.alt = "";
       image.loading = "eager";
       image.decoding = "async";
       // A tile that never arrives must leave nothing behind: a broken-image
       // icon over the drawing is worse than no imagery at all.
-      image.addEventListener("error", () => image.remove());
+      image.addEventListener("load", () => {
+        loaded += 1;
+        settled += 1;
+        notice.remove();
+        clearTimeout(timeout);
+      });
+      image.addEventListener("error", () => {
+        settled += 1;
+        image.remove();
+        if (settled === total && loaded === 0) showFailure();
+      });
       image.style.position = "absolute";
       image.style.left = `${((x * TILE_SIZE - left) / boxWidthPx) * 100}%`;
       image.style.top = `${((y * TILE_SIZE - top) / boxHeightPx) * 100}%`;
@@ -106,6 +143,7 @@ export const tileLayer = (box: TileBox, basemap: Basemap = "satellite"): HTMLEle
       layer.append(image);
     }
   }
+  timeout = setTimeout(showFailure, 12000);
   return layer;
 };
 

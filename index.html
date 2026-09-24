@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Mizan — UAE rooftop solar screening</title>
+<title>Mizan — UAE renewable energy screening</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -81,6 +81,7 @@
   .purpose {
     margin: 0; font-size: 12.5px; color: var(--ink-dim);
     border-left: 1px solid var(--line-strong); padding-left: 22px;
+    min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .purpose b { color: var(--ink); font-weight: 500; }
   .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
@@ -143,6 +144,7 @@
   .dot.is-good { background: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }
   .dot.is-warn { background: var(--warn); box-shadow: 0 0 0 3px var(--warn-soft); }
   .dot.is-stop { background: transparent; border: 1.5px solid var(--stop); }
+  .site-name, .site-where, .site-result { display: block; }
   .site-name { font-weight: 500; }
   .site-where { font-size: 11px; color: var(--faint); margin-top: 1px; }
   .site-result { font-size: 11.5px; margin-top: 5px; font-family: var(--mono); color: var(--ink-dim); }
@@ -175,6 +177,16 @@
   #map, #map svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   .map-tiles { position: absolute; inset: 0; overflow: hidden; }
   .map-tiles img { display: block; }
+  .map-load-status { position: absolute; z-index: 2; left: 12px; right: 12px; top: 12px; padding: 12px; background: #0f151df2; color: var(--ink); border: 1px solid var(--line); border-radius: 6px; font-size: 12px; }
+  .map-load-status button { margin: 8px 8px 0 0; padding: 6px 10px; }
+  .project-feature { fill: #ffb43d44; stroke: #ffbd55; stroke-width: 3; cursor: pointer; }
+  .project-feature:hover { stroke: white; stroke-width: 5; }
+  .project-context { fill: #ffffff22; stroke: #bbc5cf; stroke-width: 1.5; }
+  .project-reservoir { fill: #58b9f044; stroke: #58b9f0; }
+  .project-turbine { fill: none; stroke: #63caff; stroke-width: 6; }
+  .project-company { fill: #56db9b; stroke: white; }
+  .project-map-legend { position: absolute; bottom: 12px; left: 12px; right: 12px; width: fit-content; max-width: calc(100% - 24px); border-radius: 5px; padding: 7px 10px; background: #0f151deb; color: var(--ink); font-size: 11px; pointer-events: none; }
+  .monthly-stack .source-biogas, .renewable-legend .source-biogas { background: #ad8cff; }
   .map-ground { fill: #0d1219; }
   .map-tiles ~ svg .map-ground { fill: none; }
   .map-tiles ~ svg .map-road, .map-tiles ~ svg .map-road-casing { display: none; }
@@ -327,15 +339,64 @@
     #site-list { max-height: 260px; }
     .map-shell { height: 58vh; flex: 0 0 auto; }
   }
+  .energy-toggles { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0; }
+  .energy-toggle { border: 1px solid var(--line-strong); border-radius: 6px; padding: 7px 9px; font-size: 12px; }
+  .energy-toggle[aria-pressed="true"] { background: var(--cool-soft); border-color: var(--cool); color: var(--ink); }
+  .energy-toggle:hover:not(:disabled) { border-color: var(--cool); }
+  .energy-toggle:disabled { opacity: .5; cursor: not-allowed; }
+  .renewable-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .renewable-controls label, .renewable-picker { display: block; font-size: 11px; color: var(--ink-dim); }
+  .renewable-controls input, .renewable-picker select { display: block; width: 100%; padding: 8px; margin-top: 5px; border-radius: 5px; border: 1px solid var(--line-strong); background: var(--panel-2); color: var(--ink); font: inherit; }
+  .renewable-controls input[type="checkbox"] { display: inline-block; width: auto; margin: 0 5px 0 0; accent-color: var(--cool); }
+  .renewable-picker { margin-bottom: 20px; }
+  .renewable-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 18px 0; }
+  .renewable-stats div { border-top: 2px solid var(--cool); padding-top: 8px; }
+  .renewable-stats span { display: block; font-size: 10px; color: var(--muted); }
+  .renewable-stats b { display: block; font: 500 14px var(--mono); margin-top: 6px; overflow-wrap: anywhere; }
+  .monthly-chart { display: flex; gap: 5px; height: 154px; margin: 14px 0; }
+  .monthly-column { flex: 1; min-width: 0; text-align: center; color: var(--muted); font-size: 9px; }
+  .monthly-stack { display: flex; flex-direction: column-reverse; height: 130px; border-bottom: 1px solid var(--line-strong); }
+  .monthly-stack span { display: block; width: 100%; }
+  .monthly-stack .source-solar, .renewable-legend .source-solar { background: var(--sun); }
+  .monthly-stack .source-wind, .renewable-legend .source-wind { background: var(--cool); }
+  .monthly-stack .source-hydro, .renewable-legend .source-hydro { background: var(--good); }
+  .monthly-stack .source-geothermal, .renewable-legend .source-geothermal { background: #c698f5; }
+  .renewable-legend { display: flex; gap: 14px; font-size: 11px; color: var(--ink-dim); margin-bottom: 15px; }
+  .renewable-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; }
+  .renewable-table-wrap { overflow-x: auto; }
+  .payback-table { border-collapse: collapse; width: 100%; font-size: 11px; margin: 12px 0; }
+  .payback-table caption { text-align: left; color: var(--muted); font-size: 10px; padding-bottom: 8px; }
+  .payback-table th, .payback-table td { padding: 8px 5px; border-bottom: 1px solid var(--line); text-align: right; }
+  .payback-table th:first-child { text-align: left; }
+  .payback-table td { font-family: var(--mono); white-space: nowrap; }
+  .payback-table thead { color: var(--muted); }
+  .payback-table tbody tr:hover { background: var(--panel-2); }
+  .renewable-notes { padding-left: 18px; color: var(--muted); font-size: 11px; }
+  #renewable-site h4, #renewable-examples h4 { margin: 18px 0 8px; }
+  #renewable-site summary, #renewable-examples summary { cursor: pointer; margin: 12px 0; color: var(--ink-dim); }
+  #renewable-site a, #renewable-examples a { color: var(--cool); }
+  #renewable-dialog { color: var(--ink); background: var(--panel); border: 1px solid var(--line-strong); border-radius: 12px; padding: 0; width: min(820px, calc(100% - 24px)); max-height: 90dvh; }
+  #renewable-dialog::backdrop { background: #000b; }
+  #renewable-examples { padding: 22px; }
+  .renewable-link { margin-top: 12px; color: var(--cool); border: 1px solid var(--line-strong); border-radius: 5px; padding: 8px 10px; }
+  .renewable-section > summary { cursor: pointer; color: var(--cool); font-weight: 600; }
+  .renewable-section[open] > summary { margin-bottom: 16px; }
+  .seasonal-stats { background: var(--panel-2); border-radius: 6px; padding: 12px; }
+  .seasonal-stats b { color: var(--cool); }
+  .renewable-location { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 5px; width: max-content; max-width: 90%; padding: 16px; border-radius: 8px; border: 1px solid var(--line-strong); background: #0f151de8; text-align: center; }
+  .renewable-location > span { font-size: 11px; color: var(--ink-dim); }
+  .renewable-location .location-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--cool); box-shadow: 0 0 0 6px var(--cool-soft); margin: 7px; }
+  @media (max-width: 900px) { .brand span { display: none; } .topbar { gap: 8px; padding: 0 8px; } .topbar-right { gap: 4px; } #open-about { display: none; } .picker-btn { padding: 6px; } }
 </style>
 
 <div class="app">
   <header class="topbar">
-    <div class="brand"><b>MIZAN</b><span>UAE ROOFTOP SOLAR SCREENING</span></div>
+    <div class="brand"><b>MIZAN</b><span>UAE RENEWABLE ENERGY SCREENING</span></div>
     <p class="purpose">
-      <b>Which of these roofs is worth putting solar on</b> — and what stops the rest.
+      <b>Which energy mix works here</b> — generation, savings and site constraints.
     </p>
     <div class="topbar-right">
+      <button type="button" class="ghost-btn" id="open-renewables">UAE energy mixes</button>
       <button type="button" class="ghost-btn" id="open-about">What is this?</button>
       <div class="picker">
         <button type="button" class="picker-btn" id="picker-btn" aria-expanded="false">
@@ -352,16 +413,16 @@
         <h2>Portfolio</h2>
         <p id="portfolio-question"></p>
         <div class="tally">
-          <div class="t-good"><b id="tally-good">–</b>worth doing</div>
+          <div class="t-good"><b id="tally-good">–</b>within limit</div>
           <div class="t-warn"><b id="tally-warn">–</b>needs evidence</div>
           <div class="t-stop"><b id="tally-stop">–</b>ruled out</div>
         </div>
       </div>
       <ol id="site-list"></ol>
       <div class="rail-foot">
-        Every site below is a real building outline from OpenStreetMap. Consumption
-        and account figures are typical for the sector.
-        <div class="key"><span class="dot is-good"></span>pays back, build it</div>
+        <span id="rail-evidence-note">Every site below is a real building outline from OpenStreetMap. Consumption
+        and account figures are typical for the sector.</span>
+        <div class="key"><span class="dot is-good"></span>within financial limit</div>
         <div class="key"><span class="dot is-warn"></span>needs a measurement first</div>
         <div class="key"><span class="dot is-stop"></span>ruled out, reason given</div>
       </div>
@@ -411,13 +472,17 @@
       <div class="block"><div id="verdict"></div></div>
       <div class="block"><div class="kpis" id="kpis"></div></div>
       <div class="block">
+        <details class="renewable-section"><summary><b>Explore this site’s energy mix</b></summary><div id="renewable-site"></div></details>
+        <button type="button" class="renewable-link" id="site-renewable-examples">Explore 12 UAE solar, wind &amp; hydro examples ↗</button>
+      </div>
+      <div class="block" id="working-block">
         <h3>How each number was reached</h3>
         <div id="working"></div>
       </div>
       <div class="block">
         <h3>What went in</h3>
         <div class="facts" id="inputs"></div>
-        <p class="note">Underlined terms are the ones that decide the answer. Click any of them.</p>
+        <p class="note" id="inputs-help">Underlined terms are the ones that decide the answer. Click any of them.</p>
       </div>
       <div class="block">
         <h3>How far this can be trusted</h3>
@@ -426,6 +491,11 @@
     </aside>
   </div>
 </div>
+
+<dialog id="renewable-dialog" aria-labelledby="renewable-title">
+  <div class="sheet-head"><div><h2 id="renewable-title">UAE energy mixes</h2><p>Solar only, combined sources and wind only — with explicit evidence and assumptions.</p></div><button type="button" class="sheet-close" id="renewable-close" aria-label="Close energy examples">×</button></div>
+  <div id="renewable-examples"></div>
+</dialog>
 
 <div class="scrim" id="about-scrim" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="about-title">

@@ -1,7 +1,26 @@
-# Mizan — UAE rooftop solar screening
+# Mizan — UAE renewable energy screening
 
 Pick a real building, say what the site uses, and find out what solar can go on
 it, what it saves, and which rule caps it.
+
+Open **UAE energy mixes** for 12 UAE examples spanning solar only, solar + wind,
+wind only and hypothetical solar + micro-hydro. Toggle sources, reduce capacity,
+adjust the assumed avoided tariff, and compare monthly generation, load coverage
+and simple payback. Every portfolio building also has an energy-mix section.
+Published project capacities and assumed resource/financial inputs are labelled
+separately. Geothermal electricity remains unavailable without subsurface data.
+See [the calculation and data guide](src/data/RENEWABLE_COMBINATIONS_GUIDE.md).
+
+The main portfolio picker also includes the four groups from the supplied HTML:
+**Inland Solar Focus**, **Coastal + Wind Portfolio**, **Wind Specialist (Rare Case)**,
+and **Wadi-Adjacent (Seasonal)**. These 12 sites run directly in the three-column
+workspace, with live verdicts, source toggles, monthly charts and financial tables.
+Sites without surveyed footprints use labelled regional location maps. The
+original rooftop portfolios remain available in the same picker.
+
+After changing source files, `npm run build` refreshes both the Vite output and
+the self-contained `dist/local.html` used by `node serve.mjs`. `npm run page`
+rebuilds just the self-contained page using the project's installed Vite.
 
 ## Run it
 

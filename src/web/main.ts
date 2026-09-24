@@ -36,6 +36,10 @@ import { PORTFOLIOS, GLOSSARY, type Portfolio, type PortfolioSite } from "../dat
 import jafza from "../data/osm-jafza.json";
 import dic from "../data/osm-dic.json";
 import businessBay from "../data/osm-business-bay.json";
+import { openRenewableExamples, renderRenewables } from "./renewables";
+import { solarMonthlyYield } from "../data/uae-monthly-profiles";
+import { RENEWABLE_PORTFOLIOS, type RenewablePortfolio } from "../data/renewable-portfolios";
+import { renderRenewableWorkspace } from "./renewable-workspace";
 
 // --- formatting -------------------------------------------------------------
 
@@ -308,6 +312,8 @@ let portfolio: Portfolio = PORTFOLIOS[0];
 let activeSiteId = portfolio.sites[0].id;
 let view: MapView = "roof";
 let basemap: Basemap = "satellite";
+let renewablePortfolio: RenewablePortfolio | null = null;
+let renewableSiteId = "";
 
 const activeSite = (): PortfolioSite =>
   portfolio.sites.find((s) => s.id === activeSiteId) ?? portfolio.sites[0];
@@ -315,6 +321,7 @@ const activeSite = (): PortfolioSite =>
 // --- the rail ---------------------------------------------------------------
 
 const renderRail = () => {
+  if (renewablePortfolio) return;
   byId("portfolio-question").innerHTML =
     `“${esc(portfolio.question)}”<br><span style="color:var(--faint)">Approves anything paying back inside ${portfolio.hurdleYears} years.</span>`;
   const list = byId("site-list");
@@ -524,6 +531,7 @@ const inputRow = (label: string, value: string, source: string, chip: string, te
 
 const renderPanel = (site: PortfolioSite, outcome: Outcome | undefined) => {
   if (!outcome) {
+    byId("renewable-site").innerHTML = "";
     byId("verdict").innerHTML = `<p class="note">Running the numbers for this site…</p>`;
     byId("kpis").innerHTML = "";
     byId("working").innerHTML = "";
@@ -534,6 +542,20 @@ const renderPanel = (site: PortfolioSite, outcome: Outcome | undefined) => {
   const { result } = outcome;
   const best = result.best;
   const context = result.context;
+
+  const monthlySolar = solarMonthlyYield(context.site.location);
+  const modelYield = monthlySolar.reduce((a, b) => a + b, 0);
+  const installedSolar = best?.sizing.roofSolarKwp ?? 0;
+  const siteYield = installedSolar > 0 && best ? best.simulation.generationKwh / installedSolar : 0;
+  renderRenewables(byId("renewable-site"), {
+    id: site.id, name: site.name, where: site.where, location: context.site.location,
+    annualKwh: site.annualKwh, category: "Portfolio screening", solarKw: installedSolar,
+    solarMonthly: monthlySolar.map(v => modelYield > 0 ? v * siteYield / modelYield : 0),
+    windKw: site.sceneId === "jafza" ? 100 : undefined,
+    windProfile: site.sceneId === "jafza" ? "jebel-ali" : undefined,
+    defaultSources: installedSolar > 0 ? ["solar"] : [],
+    description: "Solar capacity follows this roof’s screening result; monthly solar output is scaled to its annual shading-adjusted yield. The optional Jebel Ali wind case is a hypothetical 100 kW land-based sensitivity, subject to measurements, siting and connection approval. This comparison does not change the rooftop verdict or map.",
+  });
 
   byId("verdict").innerHTML = `
     <div class="verdict">
@@ -615,6 +637,12 @@ const openTerm = (key: string) => {
 };
 
 const ABOUT = `
+  <h3>Multi-source portfolios</h3>
+  <p>The portfolio picker includes inland solar, coastal solar and wind, wind-only,
+  and seasonal solar and hydro examples. Select a site and toggle its sources to
+  update generation, monthly charts, load coverage and financial comparisons.
+  Sites without surveyed geometry use regional location maps. Resource and cost
+  assumptions are labelled beside the analysis.</p>
   <h3>The problem</h3>
   <p>An operator with a dozen buildings cannot get a straight answer about which of them are
   worth putting solar on. Installers quote one site at a time and every quote says yes. Nothing
@@ -661,6 +689,16 @@ const ABOUT = `
 // --- render -----------------------------------------------------------------
 
 const render = () => {
+  if (renewablePortfolio) {
+    const site = renewablePortfolio.sites.find(s => s.id === renewableSiteId) ?? renewablePortfolio.sites[0];
+    renderRenewableWorkspace(renewablePortfolio, site, basemap, id => { renewableSiteId = id; render(); });
+    return;
+  }
+  byId("views").hidden = false;
+  byId("working-block").hidden = false;
+  byId("inputs-help").hidden = false;
+  byId("rail-evidence-note").textContent = "Every site below is a real building outline from OpenStreetMap. Consumption and account figures are typical for the sector.";
+  byId("renewable-site").parentElement!.querySelector("summary")!.textContent = "Explore this site’s energy mix";
   const site = activeSite();
   const outcome = outcomes.get(site.id);
   renderRail();
@@ -674,9 +712,11 @@ const render = () => {
  * paint would mean staring at nothing; this way the rail fills in visibly.
  */
 const computeAll = () => {
+  const requestedPortfolio = portfolio;
   const queue = [...portfolio.sites].sort((a, b) => (a.id === activeSiteId ? -1 : b.id === activeSiteId ? 1 : 0));
   let index = 0;
   const next = () => {
+    if (renewablePortfolio || portfolio !== requestedPortfolio) return;
     if (index >= queue.length) return;
     const site = queue[index];
     index += 1;
@@ -693,6 +733,14 @@ const computeAll = () => {
 };
 
 const switchPortfolio = (id: string) => {
+  renewablePortfolio = RENEWABLE_PORTFOLIOS.find(p => p.id === id) ?? null;
+  if (renewablePortfolio) {
+    renewableSiteId = renewablePortfolio.sites[0].id;
+    byId("picker-name").textContent = renewablePortfolio.name;
+    byId("picker-count").textContent = `${renewablePortfolio.sites.length} sites`;
+    render();
+    return;
+  }
   portfolio = PORTFOLIOS.find((p) => p.id === id) ?? PORTFOLIOS[0];
   activeSiteId = portfolio.sites[0].id;
   byId("picker-name").textContent = portfolio.name;
@@ -702,8 +750,11 @@ const switchPortfolio = (id: string) => {
 };
 
 const boot = () => {
+  byId("open-renewables").addEventListener("click", openRenewableExamples);
+  byId("site-renewable-examples").addEventListener("click", openRenewableExamples);
+  byId("renewable-close").addEventListener("click", () => (byId("renewable-dialog") as HTMLDialogElement).close());
   const menu = byId("picker-menu");
-  menu.innerHTML = PORTFOLIOS.map(
+  menu.innerHTML = [...RENEWABLE_PORTFOLIOS, ...PORTFOLIOS].map(
     (p) => `<button type="button" data-portfolio="${p.id}"><b>${esc(p.name)}</b><span>${esc(p.kind)} · ${p.sites.length} sites</span></button>`,
   ).join("");
   for (const button of menu.querySelectorAll<HTMLButtonElement>("[data-portfolio]")) {
@@ -746,7 +797,7 @@ const boot = () => {
 
   window.addEventListener("resize", () => render());
 
-  switchPortfolio(PORTFOLIOS[0].id);
+  switchPortfolio(RENEWABLE_PORTFOLIOS[0].id);
 };
 
 boot();
