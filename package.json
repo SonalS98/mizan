@@ -1,0 +1,28 @@
+{
+  "name": "mizan-uae-renewable-planner",
+  "version": "0.4.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "serve": "node serve.mjs",
+    "shell": "node scripts/build-shell.mjs",
+    "predev": "node scripts/build-shell.mjs",
+    "dev": "vite",
+    "prebuild": "node scripts/build-shell.mjs",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "tsx --test tests/*.test.ts",
+    "demo": "tsx scripts/demo.ts",
+    "bake": "tsx scripts/bake.ts",
+    "page": "node scripts/build-page.mjs --local",
+    "typecheck": "tsc --noEmit",
+    "calibrate": "tsx scripts/calibrate.ts",
+    "validate": "tsx scripts/validate.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.19",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.11"
+  }
+}
