@@ -34,3 +34,10 @@ description: How to run and end-to-end test the Mizan UAE renewable planner UI �
 ## Devin secrets needed
 
 - None — the app needs no credentials, env vars, or login.
+
+## More pitfalls (from FINAL QA run)
+
+- `browser_console` wraps `console.*` per-evaluation — page console output *between* calls is unobservable. Count errors with a persistent `window` `error`/`unhandledrejection` listener instead; treat `console.warn` as code-verified when it is an unguarded line in an executed block.
+- Map-building polygons are small rotated SVG shapes — bbox centers of irregular shapes can fall outside the polygon. Click real interior coordinates (check `getBoundingClientRect` of `polygon.map-building` via an eval first), or dispatch a `click` on the element to verify handler wiring independent of pixel precision.
+- Native `<dialog>` elements need explicit backdrop-dismiss (click where `event.target === dialog`); the custom scrim dialogs already had it. Multi-file upload via the GTK picker requires the files to sit in ONE folder (Ctrl+L selects within one directory).
+- Window-viewport testing: `wmctrl -r :ACTIVE: -b remove,maximized_vert,maximized_horz` then `xdotool windowsize`.
