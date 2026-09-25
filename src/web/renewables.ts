@@ -43,6 +43,7 @@ export function renderRenewables(root: HTMLElement, site: RenewableCase, example
     lng: site.location.lng,
     annualKwh: state.annualKwh,
     solarCapKw: site.solarKw,
+    approvedLoadKw: site.approvedLoadKw ?? undefined,
     tariffAedPerKwh: state.tariff,
     solarMonthlyKwhPerKw: solarMonthlyYield(site.location),
     solarCapexAedPerKw: site.solarCostPerKw ?? RENEWABLE_COSTS.solar.capexAedPerKw,

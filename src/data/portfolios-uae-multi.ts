@@ -9,6 +9,8 @@ export type RenewableCase = {
   id: string; name: string; where: string; location: LatLng; annualKwh: number;
   emirate: Emirate;
   description: string; category: string; solarKw: number; windKw?: number; windProfile?: string;
+  /** The site's utility-approved load, kW — from a bill or account figure; null = not supplied. */
+  approvedLoadKw?: number | null;
   /** Turbine archetype the site's windKw is modelled with; default mid-900. */
   windTurbine?: string;
   hydro?: { capacityKw: number; headM: number; flowCms: number[] };

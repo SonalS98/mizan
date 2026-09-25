@@ -37,6 +37,17 @@ export function openCustomSiteFlow(onConfirm: (site: RenewableCase) => void) {
   let merged: MergedField[] = [];
   let pdfLib: typeof import("pdfjs-dist") | null = null;
 
+  // pdf.js ≥5 calls Uint8Array.prototype.toHex inside its worker realm; that
+  // builtin is absent in Chrome <140. Wrapping the worker source in a blob URL
+  // with a one-line polyfill puts the shim where a main-thread polyfill can't
+  // reach — and keeps everything offline.
+  const pdfWorkerSrc = async () => {
+    const url = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url);
+    const src = await (await fetch(url)).text();
+    const shim = "Uint8Array.prototype.toHex ||= function(){return [...this].map(b=>b.toString(16).padStart(2,'0')).join('')};\n";
+    return URL.createObjectURL(new Blob([shim + src], { type: "text/javascript" }));
+  };
+
   const render = () => {
     if (stage === "choose") renderChoose();
     else if (stage === "reading") renderReading();
@@ -92,7 +103,7 @@ export function openCustomSiteFlow(onConfirm: (site: RenewableCase) => void) {
         } else if (ext === "pdf") {
           progress(`Extracting energy data from ${file.name}…`);
           pdfLib ??= await import("pdfjs-dist");
-          pdfLib.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
+          pdfLib.GlobalWorkerOptions.workerSrc = await pdfWorkerSrc();
           const pdf = await pdfLib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
           const pages: string[] = [];
           for (let p = 1; p <= pdf.numPages; p++) {
@@ -109,7 +120,8 @@ export function openCustomSiteFlow(onConfirm: (site: RenewableCase) => void) {
         } else {
           progress(`We couldn't read ${file.name} — try PDF, TXT or CSV.`);
         }
-      } catch {
+      } catch (err) {
+        console.warn(`Mizan: could not read ${file.name}`, err);
         progress(`We couldn't read ${file.name} — the file may be a scan or damaged. Try a text PDF, or enter the details manually.`);
       }
     }
@@ -212,6 +224,7 @@ export function openCustomSiteFlow(onConfirm: (site: RenewableCase) => void) {
       name, where: address, emirate, location: { lat, lng },
       annualKwh,
       solarKw: Math.round(solarKw),
+      approvedLoadKw,
       category: "Your site · analysed like the examples",
       description: `A site you supplied — fields marked "Found in document" came from your uploaded file (${docFields.map(d => d.source).join("; ") || "manual entry"}); everything else is a screening assumption. Location is ${note}.`,
       defaultSources: ["solar"],
