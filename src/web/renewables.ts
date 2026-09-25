@@ -8,7 +8,7 @@ import { nearestWindSite } from "../data/wind-sites";
 const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 const number = (n: number) => new Intl.NumberFormat("en-AE", { maximumFractionDigits: 1 }).format(n);
 const money = (n: number) => `AED ${number(Math.round(n))}`;
-const payback = (n: number | null) => n === null ? "—" : `${n.toFixed(1)} yr`;
+const payback = (n: number | null) => n === null ? "—" : `${n.toFixed(1)} years`;
 type Selection = { sources: Set<RenewableSource>; capacities: Partial<Record<RenewableSource, number>>; tariff: number; annualKwh: number; costs: Partial<Record<RenewableSource, number>> };
 const selections = new Map<string, Selection>();
 let exampleId = "sir-bani-yas";
@@ -69,14 +69,14 @@ export function renderRenewables(root: HTMLElement, site: RenewableCase, example
       <div class="rec-mix">${recommendation.mix.length
         ? recommendation.mix.map(m => `<div class="rec-source"><b>${esc(m.detail)}</b><span>${SOURCE_LABELS[m.source]}</span></div>`).join("")
         : `<div class="rec-source"><b>No cost-effective mix found</b><span>every option misses the investment limit at the assumed rate</span></div>`}
-        <div class="rec-nums"><span>Output</span><b>${number(recommendation.result.annualResults.totalMwh)} MWh/yr</b></div>
-        <div class="rec-nums"><span>Net saving</span><b>${money(recommendation.result.financial.netSavingsAed)}/yr</b></div>
+        <div class="rec-nums"><span>Output</span><b>${number(recommendation.result.annualResults.totalMwh)} MWh/year</b></div>
+        <div class="rec-nums"><span>Net saving</span><b>${money(recommendation.result.financial.netSavingsAed)}/year</b></div>
         <div class="rec-nums"><span>Payback</span><b>${payback(recommendation.result.financial.paybackYears)}</b></div>
         ${recommendation.windCapacityFactor !== null ? `<div class="rec-nums"><span>Wind resource</span><b>${(recommendation.windCapacityFactor * 100).toFixed(0)}% CF</b></div>` : ""}
       </div>
       ${recommendation.mix.length ? `<button type="button" class="rec-apply">Apply recommended mix</button>` : ""}
       <p class="note">${esc(recommendation.solarCapNote)}</p>
-      ${recommendation.legal.map(item => `<p class="note"><strong>${item.status === "eligible" ? "✓" : item.status === "needs-evidence" ? "!" : "✕"}</strong> ${esc(item.text)}</p>`).join("")}
+      ${recommendation.legal.map(item => `<p class="note rec-legal"><b class="${item.status === "eligible" ? "is-eligible" : item.status === "needs-evidence" ? "is-evidence" : "is-blocked"}">${item.status === "eligible" ? "✓" : item.status === "needs-evidence" ? "!" : "✕"}</b>${esc(item.text)}</p>`).join("")}
       ${recommendation.rejected.map(r => `<p class="note rec-rejected"><strong>Ruled out:</strong> ${esc(r)}</p>`).join("")}
       ${recommendation.evidenceNeeded.length ? `<details><summary>What is still needed before building</summary>${recommendation.evidenceNeeded.map(e => `<p class="note">${esc(e)}</p>`).join("")}</details>` : ""}
     </div>
@@ -118,7 +118,7 @@ export function renderRenewables(root: HTMLElement, site: RenewableCase, example
         <p class="note">Seasonal stability: ${result.complementarity.stabilityScore ?? "—"}/100, calculated from the variation in daily-average monthly output. Peak offset: ${result.complementarity.peakOffsetMonths === null ? "not established" : `${result.complementarity.peakOffsetMonths} months`}. Neither metric measures hourly reliability or storage requirements.</p>
       </details>
       <h4>Selected mix · financial estimate</h4>
-      <div class="renewable-table-wrap"><table class="payback-table"><caption>Shared savings allocated by each source’s monthly generation</caption><thead><tr><th>Source</th><th>Build cost</th><th>Net saving / yr</th><th>Payback</th></tr></thead><tbody>
+      <div class="renewable-table-wrap"><table class="payback-table"><caption>Shared savings allocated by each source’s monthly generation</caption><thead><tr><th>Source</th><th>Build cost</th><th>Net saving / year</th><th>Payback</th></tr></thead><tbody>
         ${result.bySource.map(s => `<tr><th>${SOURCE_LABELS[s.source]}</th><td>${money(s.financial.capexAed)}</td><td>${money(s.financial.netSavingsAed)}</td><td>${payback(s.financial.paybackYears)}</td></tr>`).join("")}
         <tr><th>Total</th><td>${money(result.financial.capexAed)}</td><td>${money(result.financial.netSavingsAed)}</td><td>${payback(result.financial.paybackYears)}</td></tr>
       </tbody></table></div>
@@ -126,7 +126,7 @@ export function renderRenewables(root: HTMLElement, site: RenewableCase, example
       <ul class="renewable-notes">${result.recommendations.map(r => `<li>${esc(r)}</li>`).join("")}</ul>
     ` : `<p class="callout">No sources selected. Select an available source to calculate generation and savings.</p>`}
     </div>
-    <details class="renewable-comparisons"><summary>Compare source combinations</summary><div class="renewable-table-wrap"><table class="payback-table"><caption>Independent alternatives at the capacities entered above</caption><thead><tr><th>Scenario</th><th>MWh/yr</th><th>Net saving / yr</th><th>Payback</th></tr></thead><tbody>${comparisons.map(r => `<tr><th>${esc(r.name)}</th><td>${number(r.annualResults.totalMwh)}</td><td>${money(r.financial.netSavingsAed)}</td><td>${payback(r.financial.paybackYears)}</td></tr>`).join("")}</tbody></table></div></details>
+    <details class="renewable-comparisons"><summary>Compare source combinations</summary><div class="renewable-table-wrap"><table class="payback-table"><caption>Independent alternatives at the capacities entered above</caption><thead><tr><th>Scenario</th><th>MWh/year</th><th>Net saving / year</th><th>Payback</th></tr></thead><tbody>${comparisons.map(r => `<tr><th>${esc(r.name)}</th><td>${number(r.annualResults.totalMwh)}</td><td>${money(r.financial.netSavingsAed)}</td><td>${payback(r.financial.paybackYears)}</td></tr>`).join("")}</tbody></table></div></details>
     <p class="note">${site.solarAnnualKwh ? "Solar annual total: published approximate yield, distributed using the UAE monthly model. " : ""}Solar: existing UAE model fitted to bundled PVGIS SARAH3 2018–2022 monthly data, including temperature and dust losses. Wind and hydro: explicitly assumed resource inputs. <a href="https://re.jrc.ec.europa.eu/pvg_tools/en/" target="_blank" rel="noopener noreferrer">PVGIS ↗</a> · <a href="https://www.dewa.gov.ae/en/about-us/strategic-initiatives/hatta-project" target="_blank" rel="noopener noreferrer">Hatta storage ↗</a></p>`;
 
   const rerender = (selector: string) => {

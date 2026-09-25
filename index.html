@@ -347,8 +347,13 @@
   .rec-source b, .rec-nums b { display: block; font: 500 14px var(--mono); margin-top: 4px; }
   .rec-source, .rec-nums { border-top: 2px solid var(--cool); padding-top: 6px; }
   .rec-source span, .rec-nums span { font-size: 10px; color: var(--muted); }
-  .rec-apply { font: 600 12px var(--sans); padding: 7px 14px; border: 0; border-radius: 6px; background: var(--cool); color: #fff; cursor: pointer; }
+  .rec-apply { font: 600 12px var(--sans); padding: 7px 14px; border: 0; border-radius: 6px; background: var(--sun); color: #1a1205; cursor: pointer; transition: filter .15s; }
   .rec-apply:hover { filter: brightness(1.1); }
+  .rec-legal { margin: 2px 0; }
+  .rec-legal b { display: inline-block; width: 14px; font-family: var(--mono); }
+  .rec-legal .is-eligible { color: var(--good); }
+  .rec-legal .is-evidence { color: var(--warn); }
+  .rec-legal .is-blocked { color: var(--stop); }
   .rec-rejected { color: var(--muted); }
   .energy-toggles { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0; }
   .energy-toggle { border: 1px solid var(--line-strong); border-radius: 6px; padding: 7px 9px; font-size: 12px; }
@@ -393,7 +398,7 @@
   #analyze-own { width: 100%; font: 600 12.5px var(--sans); padding: 9px 12px; border: 1px dashed var(--line-strong); border-radius: 7px; background: transparent; color: var(--cool); cursor: pointer; }
   #analyze-own:hover { background: var(--cool-soft); border-color: var(--cool); }
   .cs-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 14px 0; }
-  .cs-choice { display: block; text-align: left; padding: 14px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--panel-2); color: var(--ink); cursor: pointer; font-family: var(--sans); }
+  .cs-choice { display: block; text-align: left; padding: 14px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--panel-2); color: var(--ink); cursor: pointer; font-family: var(--sans); transition: border-color .15s; }
   .cs-choice:hover { border-color: var(--cool); }
   .cs-choice b { display: block; font-size: 13.5px; }
   .cs-choice span { display: block; font-size: 11.5px; color: var(--muted); margin-top: 5px; }
@@ -407,7 +412,7 @@
   .cs-field.is-check { border-color: var(--warn); }
   .cs-field-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
   .cs-label { font-size: 12px; font-weight: 600; }
-  .cs-field input, .cs-field select { width: 100%; font: 12.5px var(--sans); padding: 7px 9px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--void); color: var(--ink); }
+  .cs-field input, .cs-field select { width: 100%; font: 12.5px var(--sans); padding: 8px; border: 1px solid var(--line-strong); border-radius: 5px; background: var(--panel-2); color: var(--ink); }
   .cs-chip { font-size: 10px; font-weight: 600; letter-spacing: .03em; padding: 3px 8px; border-radius: 99px; }
   .cs-chip.is-found { background: var(--good-soft); color: var(--good); }
   .cs-chip.is-check { background: var(--warn-soft); color: var(--warn); }
@@ -416,8 +421,9 @@
   .cs-conflict { margin-top: 6px; font-size: 11.5px; color: var(--warn); }
   .cs-conflict label { display: block; margin-top: 4px; font-weight: normal; color: var(--ink-dim); }
   .cs-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
-  .cs-back { font: 600 12px var(--sans); padding: 8px 14px; border: 1px solid var(--line-strong); border-radius: 6px; background: transparent; color: var(--ink-dim); cursor: pointer; }
-  .cs-confirm { font: 600 12.5px var(--sans); padding: 9px 16px; border: 0; border-radius: 6px; background: var(--cool); color: #fff; cursor: pointer; }
+  .cs-back { font: 600 12px var(--sans); padding: 8px 14px; border: 1px solid var(--line-strong); border-radius: 6px; background: transparent; color: var(--ink-dim); cursor: pointer; transition: color .15s, border-color .15s; }
+  .cs-back:hover { color: var(--ink); border-color: var(--cool); }
+  .cs-confirm { font: 600 12.5px var(--sans); padding: 9px 16px; border: 0; border-radius: 6px; background: var(--sun); color: #1a1205; cursor: pointer; transition: filter .15s; }
   .cs-confirm:hover { filter: brightness(1.1); }
   #renewable-examples { padding: 22px; }
   .renewable-link { margin-top: 12px; color: var(--cool); border: 1px solid var(--line-strong); border-radius: 5px; padding: 8px 10px; }
