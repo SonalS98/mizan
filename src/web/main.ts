@@ -384,14 +384,17 @@ const drawStage = (site: PortfolioSite, outcome: Outcome | undefined) => {
     shading: outcome?.shading ?? null,
     blocked: outcome?.blocked ?? null,
     roofHeightM: site.roofHeightM ?? buildings[site.buildingIndex].heightM,
-    onSelect: () => {},
+    onSelect: (index) => {
+      const b = buildings[index];
+      byId("map-caption").textContent = `${index === site.buildingIndex ? "Selected roof" : "Mapped building"}: ${Math.round(b.areaM2).toLocaleString()} m² footprint${b.heightM !== null ? `, ${b.heightM} m tall (${b.heightSource === "levels" ? "floors × storey estimate" : "OpenStreetMap height tag"})` : ", no height recorded in OpenStreetMap"}.`;
+    },
   });
   byId("map").prepend(tileLayer({ x: box.x, y: box.y, w: box.w, h: box.h, origin: scene.o }, basemap));
   byId("map-attribution").textContent = basemapCredit(basemap);
 
   const wiring = view === "wiring" && outcome?.design;
   const shaded = view === "shading" && outcome?.shading;
-  byId("legend-roof").hidden = Boolean(wiring || shaded);
+  byId("legend-roof").hidden = Boolean(wiring || shaded) || view === "area";
   byId("legend-wiring").hidden = !wiring;
   byId("legend-shading").hidden = !shaded;
 
@@ -755,6 +758,10 @@ const boot = () => {
   byId("site-renewable-examples").addEventListener("click", () => openRenewableExamples());
   byId("analyze-own").addEventListener("click", () => openCustomSiteFlow((site) => openRenewableExamples(site.id)));
   byId("renewable-close").addEventListener("click", () => (byId("renewable-dialog") as HTMLDialogElement).close());
+  for (const id of ["renewable-dialog", "site-dialog"]) {
+    const dlg = byId(id) as HTMLDialogElement;
+    dlg.addEventListener("click", (event) => { if (event.target === dlg) dlg.close(); });
+  }
   const menu = byId("picker-menu");
   menu.innerHTML = [...RENEWABLE_PORTFOLIOS, ...PORTFOLIOS].map(
     (p) => `<button type="button" data-portfolio="${p.id}"><b>${esc(p.name)}</b><span>${esc(p.kind)} · ${p.sites.length} sites</span></button>`,
