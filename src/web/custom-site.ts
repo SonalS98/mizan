@@ -61,7 +61,6 @@ export function openCustomSiteFlow(onConfirm: (site: RenewableCase) => void) {
 
   const renderChoose = () => {
     body.innerHTML = `
-      <h3 id="site-dialog-title">Analyze your own site</h3>
       <p class="note">Bring the numbers Mizan needs two ways — type them in, or upload an electricity bill / site document and let Mizan read it. Nothing is analysed until you review what it found.</p>
       <div class="cs-choices">
         <button type="button" class="cs-choice" data-manual><b>Enter details manually</b><span>Type the site's load, location and roof details yourself.</span></button>
@@ -241,6 +240,7 @@ export function openCustomSiteFlow(onConfirm: (site: RenewableCase) => void) {
   };
 
   dialog.onclose = null;
+  document.getElementById("site-dialog-close")!.onclick = () => dialog.close();
   render();
   dialog.showModal();
 }
