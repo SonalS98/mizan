@@ -1,6 +1,9 @@
-import { UAE_RENEWABLE_CASES, systemsForCase, type RenewableCase } from "../data/portfolios-uae-multi";
-import { MONTHS, SOURCE_LABELS, type RenewableSource } from "../data/uae-monthly-profiles";
+import { RENEWABLE_COSTS, UAE_RENEWABLE_CASES, systemsForCase, type RenewableCase } from "../data/portfolios-uae-multi";
+import { MONTHS, SOURCE_LABELS, solarMonthlyYield, type RenewableSource } from "../data/uae-monthly-profiles";
 import { analyzeRenewableCombination, compareScenarios } from "../engine/renewable-combinations";
+import { recommendMix } from "../engine/recommend";
+import { RULE_SETS, labelEmirate } from "../engine/rules";
+import { nearestWindSite } from "../data/wind-sites";
 
 const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 const number = (n: number) => new Intl.NumberFormat("en-AE", { maximumFractionDigits: 1 }).format(n);
@@ -33,6 +36,23 @@ export function renderRenewables(root: HTMLElement, site: RenewableCase, example
   const result = analyzeRenewableCombination(site.name, selected, state.annualKwh, { tariffAedPerKwh: state.tariff });
   const stats = result.annualResults;
   const maxMonth = Math.max(1, ...result.monthlyGenerationKwh);
+
+  const recommendation = recommendMix({
+    emirate: site.emirate,
+    lat: site.location.lat,
+    lng: site.location.lng,
+    annualKwh: state.annualKwh,
+    solarCapKw: site.solarKw,
+    tariffAedPerKwh: state.tariff,
+    solarMonthlyKwhPerKw: solarMonthlyYield(site.location),
+    solarCapexAedPerKw: site.solarCostPerKw ?? RENEWABLE_COSTS.solar.capexAedPerKw,
+    solarOmFraction: RENEWABLE_COSTS.solar.annualOmFraction,
+    windCapexAedPerKw: RENEWABLE_COSTS.wind.capexAedPerKw,
+    windOmFraction: RENEWABLE_COSTS.wind.annualOmFraction,
+    windSiteId: site.windProfile,
+    windTurbineId: site.windTurbine,
+  });
+  const rules = RULE_SETS[site.emirate];
   const comparisons = compareScenarios([
     ...configured.map(s => ({ name: `${SOURCE_LABELS[s.source]} only`, systems: [s] })),
     ...(configured.length > 1 ? [{ name: "All available sources", systems: configured }] : []),
@@ -43,6 +63,22 @@ export function renderRenewables(root: HTMLElement, site: RenewableCase, example
     <p class="note">${esc(site.where)} · ${number(site.annualKwh / 1000)} MWh/year initial comparison load</p>
     <p class="note">${esc(site.description)} ${site.sourceUrl ? `<a href="${esc(site.sourceUrl)}" target="_blank" rel="noopener noreferrer">Published project details ↗</a>` : ""}</p>
     ${site.evidence ? `<details open><summary>Published facts and modeling assumptions</summary>${site.evidence.map(e => `<p class="note"><strong>${esc(e.label)}:</strong> ${esc(e.value)} ${e.url ? `<a href="${esc(e.url)}" target="_blank" rel="noopener noreferrer">Source ↗</a>` : ""}</p>`).join("")}</details>` : ""}
+    <div class="rec-card">
+      <div class="rec-head"><b>Mizan recommendation</b><span>${esc(labelEmirate(site.emirate))} · ${esc(rules.scheme)}</span></div>
+      <div class="rec-mix">${recommendation.mix.length
+        ? recommendation.mix.map(m => `<div class="rec-source"><b>${esc(m.detail)}</b><span>${SOURCE_LABELS[m.source]}</span></div>`).join("")
+        : `<div class="rec-source"><b>No cost-effective mix found</b><span>every option misses the investment limit at the assumed rate</span></div>`}
+        <div class="rec-nums"><span>Output</span><b>${number(recommendation.result.annualResults.totalMwh)} MWh/yr</b></div>
+        <div class="rec-nums"><span>Net saving</span><b>${money(recommendation.result.financial.netSavingsAed)}/yr</b></div>
+        <div class="rec-nums"><span>Payback</span><b>${payback(recommendation.result.financial.paybackYears)}</b></div>
+        ${recommendation.windCapacityFactor !== null ? `<div class="rec-nums"><span>Wind resource</span><b>${(recommendation.windCapacityFactor * 100).toFixed(0)}% CF</b></div>` : ""}
+      </div>
+      ${recommendation.mix.length ? `<button type="button" class="rec-apply">Apply recommended mix</button>` : ""}
+      <p class="note">${esc(recommendation.solarCapNote)}</p>
+      ${recommendation.legal.map(item => `<p class="note"><strong>${item.status === "eligible" ? "✓" : item.status === "needs-evidence" ? "!" : "✕"}</strong> ${esc(item.text)}</p>`).join("")}
+      ${recommendation.rejected.map(r => `<p class="note rec-rejected"><strong>Ruled out:</strong> ${esc(r)}</p>`).join("")}
+      ${recommendation.evidenceNeeded.length ? `<details><summary>What is still needed before building</summary>${recommendation.evidenceNeeded.map(e => `<p class="note">${esc(e)}</p>`).join("")}</details>` : ""}
+    </div>
     <div class="energy-toggles" role="group" aria-label="Energy sources">
       ${(Object.keys(SOURCE_LABELS) as RenewableSource[]).map(source => {
         const supported = available.some(s => s.source === source);
@@ -97,6 +133,20 @@ export function renderRenewables(root: HTMLElement, site: RenewableCase, example
     onChange?.();
     root.querySelector<HTMLElement>(selector)?.focus({ preventScroll: true });
   };
+  root.querySelector<HTMLButtonElement>(".rec-apply")?.addEventListener("click", () => {
+    state.sources = new Set(recommendation.mix.map(m => m.source));
+    for (const m of recommendation.mix) {
+      state.capacities[m.source] = m.capacityKw;
+      if (m.source === "wind" && !site.windProfile) {
+        // Modelled climate now exists for every configured site, so a
+        // recommendation can inject wind even where the example had none.
+        site.windKw = m.capacityKw;
+        site.windProfile = nearestWindSite(site.location.lat, site.location.lng).id;
+        site.windTurbine = m.turbineId ?? "mid-900";
+      }
+    }
+    rerender(".rec-card");
+  });
   root.querySelector<HTMLSelectElement>("[data-case]")?.addEventListener("change", e => {
     exampleId = (e.target as HTMLSelectElement).value;
     renderRenewables(root, UAE_RENEWABLE_CASES.find(s => s.id === exampleId)!, true);

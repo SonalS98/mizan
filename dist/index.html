@@ -14,7 +14,7 @@
   img { max-width: 100%; }
   [hidden] { display: none !important; }
 </style>
-  <script type="module" crossorigin src="/assets/index-D5R_ACEh.js"></script>
+  <script type="module" crossorigin src="/assets/index-Ceq7l3xC.js"></script>
 </head>
 <body>
 <!-- Generated from src/web/shell.html by scripts/build-shell.mjs. Do not edit. -->
@@ -340,6 +340,17 @@
     #site-list { max-height: 260px; }
     .map-shell { height: 58vh; flex: 0 0 auto; }
   }
+  .rec-card { border: 1px solid var(--line); border-left: 3px solid var(--cool); border-radius: 8px; padding: 14px 16px; margin: 14px 0; background: var(--panel); }
+  .rec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .rec-head b { font-size: 13px; letter-spacing: .04em; text-transform: uppercase; }
+  .rec-head span { font-size: 11px; color: var(--muted); }
+  .rec-mix { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin: 12px 0 10px; }
+  .rec-source b, .rec-nums b { display: block; font: 500 14px var(--mono); margin-top: 4px; }
+  .rec-source, .rec-nums { border-top: 2px solid var(--cool); padding-top: 6px; }
+  .rec-source span, .rec-nums span { font-size: 10px; color: var(--muted); }
+  .rec-apply { font: 600 12px var(--sans); padding: 7px 14px; border: 0; border-radius: 6px; background: var(--cool); color: #fff; cursor: pointer; }
+  .rec-apply:hover { filter: brightness(1.1); }
+  .rec-rejected { color: var(--muted); }
   .energy-toggles { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0; }
   .energy-toggle { border: 1px solid var(--line-strong); border-radius: 6px; padding: 7px 9px; font-size: 12px; }
   .energy-toggle[aria-pressed="true"] { background: var(--cool-soft); border-color: var(--cool); color: var(--ink); }

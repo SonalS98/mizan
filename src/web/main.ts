@@ -548,7 +548,7 @@ const renderPanel = (site: PortfolioSite, outcome: Outcome | undefined) => {
   const installedSolar = best?.sizing.roofSolarKwp ?? 0;
   const siteYield = installedSolar > 0 && best ? best.simulation.generationKwh / installedSolar : 0;
   renderRenewables(byId("renewable-site"), {
-    id: site.id, name: site.name, where: site.where, location: context.site.location,
+    id: site.id, name: site.name, where: site.where, emirate: site.emirate, location: context.site.location,
     annualKwh: site.annualKwh, category: "Portfolio screening", solarKw: installedSolar,
     solarMonthly: monthlySolar.map(v => modelYield > 0 ? v * siteYield / modelYield : 0),
     windKw: site.sceneId === "jafza" ? 100 : undefined,
