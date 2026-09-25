@@ -37,6 +37,7 @@ import jafza from "../data/osm-jafza.json";
 import dic from "../data/osm-dic.json";
 import businessBay from "../data/osm-business-bay.json";
 import { openRenewableExamples, renderRenewables } from "./renewables";
+import { openCustomSiteFlow } from "./custom-site";
 import { solarMonthlyYield } from "../data/uae-monthly-profiles";
 import { RENEWABLE_PORTFOLIOS, type RenewablePortfolio } from "../data/renewable-portfolios";
 import { renderRenewableWorkspace } from "./renewable-workspace";
@@ -750,8 +751,9 @@ const switchPortfolio = (id: string) => {
 };
 
 const boot = () => {
-  byId("open-renewables").addEventListener("click", openRenewableExamples);
-  byId("site-renewable-examples").addEventListener("click", openRenewableExamples);
+  byId("open-renewables").addEventListener("click", () => openRenewableExamples());
+  byId("site-renewable-examples").addEventListener("click", () => openRenewableExamples());
+  byId("analyze-own").addEventListener("click", () => openCustomSiteFlow((site) => openRenewableExamples(site.id)));
   byId("renewable-close").addEventListener("click", () => (byId("renewable-dialog") as HTMLDialogElement).close());
   const menu = byId("picker-menu");
   menu.innerHTML = [...RENEWABLE_PORTFOLIOS, ...PORTFOLIOS].map(

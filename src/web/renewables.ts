@@ -188,7 +188,8 @@ export function renderRenewables(root: HTMLElement, site: RenewableCase, example
   });
 }
 
-export function openRenewableExamples() {
+export function openRenewableExamples(siteId?: string) {
+  if (siteId && UAE_RENEWABLE_CASES.some(s => s.id === siteId)) exampleId = siteId;
   const dialog = document.getElementById("renewable-dialog") as HTMLDialogElement;
   renderRenewables(document.getElementById("renewable-examples")!, UAE_RENEWABLE_CASES.find(s => s.id === exampleId)!, true);
   dialog.showModal();
