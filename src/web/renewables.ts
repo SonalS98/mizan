@@ -84,14 +84,15 @@ export function renderRenewables(root: HTMLElement, site: RenewableCase, example
       ${(Object.keys(SOURCE_LABELS) as RenewableSource[]).map(source => {
         const supported = available.some(s => s.source === source);
         const reason = source === "geothermal" ? "No proven subsurface electricity resource supplied" : source === "hydro" ? "No measured head and flow supplied" : source === "wind" ? "No site wind assessment supplied" : "No solar capacity configured";
-        return `<button type="button" class="energy-toggle source-${source}" data-source="${source}" aria-pressed="${supported && state.sources.has(source)}" ${supported ? "" : `disabled title="${reason}"`}>${SOURCE_LABELS[source]}${supported ? "" : " · no data"}</button>`;
+        const short = source === "geothermal" ? " · no subsurface data" : source === "hydro" ? " · no water resource" : source === "wind" ? " · no site data" : " · not configured";
+        return `<button type="button" class="energy-toggle source-${source}" data-source="${source}" aria-pressed="${supported && state.sources.has(source)}" ${supported ? "" : `disabled title="${reason}"`}>${SOURCE_LABELS[source]}${supported ? "" : short}</button>`;
       }).join("")}
     </div>
     <p class="note">Geothermal electricity needs proven temperature, depth and flow; direct-use heat is a separate assessment. Hydro needs an eligible water resource. Hatta pumped storage is not counted as a new energy source.</p>
     <div class="renewable-controls">
       ${configured.map(s => `<label>${SOURCE_LABELS[s.source]} capacity (${s.source === "solar" ? "kWp" : "kW"})<input data-capacity="${s.source}" type="number" min="0" max="${available.find(a => a.source === s.source)!.capacityKw}" step="any" value="${s.capacityKw}" ${state.sources.has(s.source) ? "" : "disabled"}></label>`).join("")}
       ${configured.map(s => `<label>${SOURCE_LABELS[s.source]} assumed cost (AED/kW)<input data-cost="${s.source}" type="number" min="1" step="any" value="${s.capexAedPerKw}"></label>`).join("")}
-      <label>Scenario annual consumption (kWh)<input data-load type="number" min="0" step="any" value="${state.annualKwh}"></label>
+      <label>Scenario annual consumption (kWh)<input data-load type="number" min="0" step="any" value="${Math.round(state.annualKwh)}"></label>
       <label>Assumed avoided rate (AED/kWh)<input data-rate type="number" min="0" max="2" step="0.01" value="${state.tariff}"></label>
     </div>
     <p class="note renewable-cost-note">Capacity can be reduced from the example design. Costs are assumptions: ${configured.map(s => `${SOURCE_LABELS[s.source]} ${money(s.capexAedPerKw)}/kW, ${(s.annualOmFraction * 100).toFixed(1)}% annual O&M`).join("; ") || "no buildable sources configured"}.${configured.some(s => s.source === "wind") ? ` Wind uses a flat assumed ${(configured.find(s => s.source === "wind")!.monthlyKwhPerKw.reduce((a, b) => a + b, 0) / 8760 * 100).toFixed(0)}% capacity factor, not a measured seasonal pattern.` : ""}</p>
@@ -162,13 +163,17 @@ export function renderRenewables(root: HTMLElement, site: RenewableCase, example
     const update = (event: Event) => {
       const value = input.valueAsNumber;
       if (!Number.isFinite(value) || !input.checkValidity()) {
-        if (event.type === "change") input.reportValidity();
+        if (event.type === "change") {
+          input.value = input.dataset.current ?? input.defaultValue;
+          input.reportValidity();
+        }
         return;
       }
+      input.dataset.current = input.value;
       const source = input.dataset.capacity as RenewableSource | undefined;
       if (source) state.capacities[source] = value;
       else if (input.dataset.cost) state.costs[input.dataset.cost as RenewableSource] = value;
-      else if (input.hasAttribute("data-load")) state.annualKwh = value;
+      else if (input.hasAttribute("data-load")) state.annualKwh = Math.round(value);
       else state.tariff = value;
       // Keep the active input mounted so typing decimals, tabbing and keyboard
       // edits work. Replace only calculated outputs, preserving disclosure state.

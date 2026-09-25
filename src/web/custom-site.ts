@@ -225,15 +225,21 @@ export function openCustomSiteFlow(onConfirm: (site: RenewableCase) => void) {
       solarKw: Math.round(solarKw),
       approvedLoadKw,
       category: "Your site · analysed like the examples",
-      description: `A site you supplied — fields marked "Found in document" came from your uploaded file (${docFields.map(d => d.source).join("; ") || "manual entry"}); everything else is a screening assumption. Location is ${note}.`,
+      description: `A site you supplied — fields marked "Found in document" came from your uploaded file (${[...new Set(docFields.map(d => d.source))].join("; ") || "manual entry"}); everything else is a screening assumption. Location is ${note}.`,
       defaultSources: ["solar"],
       defaultTariff: 0.3,
-      evidence: docFields.map(f => ({
-        label: FIELD_LABELS[f.key],
-        value: f.value + (f.note ? ` — ${f.note}` : ""),
-      })),
+      evidence: merged
+        .filter(f => valueOf(f.key))
+        .map(f => {
+          const confirmed = valueOf(f.key);
+          const provenance = f.status === "not-found" || !f.value
+            ? "provided by you"
+            : confirmed === f.value
+              ? `extracted from ${f.source}`
+              : `provided by you — the document said ${f.value}`;
+          return { label: FIELD_LABELS[f.key], value: `${confirmed} — ${provenance}` };
+        }),
     };
-    if (approvedLoadKw) site.evidence!.push({ label: "Approved load", value: `${approvedLoadKw.toLocaleString()} kW` });
     UAE_RENEWABLE_CASES.push(site);
     dialog.close();
     onConfirm(site);
